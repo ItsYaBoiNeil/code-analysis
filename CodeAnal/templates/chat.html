@@ -1,0 +1,39 @@
+<h2>Chat with the model about your code:</h2>
+
+<form id="chat-form" method="post">
+    {% csrf_token %}
+    <input type="text" id="question" placeholder="Ask a question about your code" required>
+    <button type="submit">Send</button>
+</form>
+
+<div id="chat-output"></div>
+
+<script>
+    document.getElementById('chat-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const question = document.getElementById('question').value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch("{% url 'chat_with_model' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: new URLSearchParams({ 'question': question })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.result) {
+                const chatOutput = document.getElementById('chat-output');
+                chatOutput.innerHTML += `<p><strong>You:</strong> ${question}</p>`;
+                chatOutput.innerHTML += `<p><strong>Model:</strong> ${data.result}</p>`;
+                document.getElementById('question').value = '';  // Clear input after submitting
+            } else if (data.error) {
+                alert('Error: ' + data.details);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+</script>
